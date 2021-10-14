@@ -19,5 +19,17 @@ namespace finance_aspdotnetcore.Controllers
     {
       _context = context;
     }
+
+    // GET: api/Stock
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<StockItem>>> GetStocks(
+      [FromQuery(Name = "from")] String from,
+      [FromQuery(Name = "to")] String to
+    )
+    {
+      return await _context.Stocks
+        .Where(x => x.DateYmd >= int.Parse(from) && x.DateYmd <= int.Parse(to))
+        .ToListAsync();
+    }
   }
 }
