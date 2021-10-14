@@ -3,24 +3,47 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using finance_aspdotnetcore.Models;
+using finance_aspdotnetcore.Data;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace finance_aspdotnetcore
 {
-    public class Program
+  public class Program
+  {
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+      var host = CreateHostBuilder(args).Build();
+      initializeDb(host);
+      host.Run();
     }
+
+    public static void initializeDb(IHost host)
+    {
+      using (var scope = host.Services.CreateScope())
+      {
+        var services = scope.ServiceProvider;
+        try
+        {
+          var context = services.GetRequiredService<StockContext>();
+          DbInitializer.Initialize(context);
+        }
+        catch (Exception ex)
+        {
+          var logger = services.GetRequiredService<ILogger<Program>>();
+          logger.LogError(ex, "An error occurred creating the DB.");
+        }
+      }
+    }
+
+    public static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
+              webBuilder.UseStartup<Startup>();
+            });
+  }
 }
